@@ -67,6 +67,20 @@ except ImportError:
     HN_BLOGS_AVAILABLE = False
     print("[WARN] HN Top Blogs sensor not available, skipping.")
 
+try:
+    from sensors.techcrunch_rss import fetch_techcrunch
+    TC_AVAILABLE = True
+except ImportError:
+    TC_AVAILABLE = False
+    print("[WARN] TechCrunch sensor not available, skipping.")
+
+try:
+    from sensors.mit_tech_review import fetch_mit_review
+    MIT_TR_AVAILABLE = True
+except ImportError:
+    MIT_TR_AVAILABLE = False
+    print("[WARN] MIT Technology Review sensor not available, skipping.")
+
 # --- Anti-Hallucination: Link Verifier ---
 try:
     from utils.verifier import verify_link
@@ -268,6 +282,24 @@ Keep it concise but informative. If no data found, say "暂无X平台讨论数�
         except Exception as e:
             print(f"  [WARN] XHS failed: {e}")
     
+    # ========== TECHCRUNCH ==========
+    if TC_AVAILABLE:
+        print("[*] Fetching TechCrunch...")
+        try:
+            tc_articles = fetch_techcrunch(limit=limit_per_source)
+            for a in tc_articles:
+                intel["tech_trends"].append({
+                    "source": "TechCrunch",
+                    "category": "TechCrunch",
+                    "title": a.title,
+                    "url": a.url,
+                    "heat": a.heat,
+                    "time": a.pub_date,
+                    "detail": a.description
+                })
+        except Exception as e:
+            print(f"  [WARN] TechCrunch failed: {e}")
+
     # ========== HN TOP BLOGS (INSIGHTS) ==========
     if HN_BLOGS_AVAILABLE:
         print("[*] Fetching HN Top Blogs (Insights)...")
@@ -285,6 +317,24 @@ Keep it concise but informative. If no data found, say "暂无X平台讨论数�
                 })
         except Exception as e:
             print(f"  [WARN] HN Blogs failed: {e}")
+
+    # ========== MIT TECHNOLOGY REVIEW (INSIGHTS) ==========
+    if MIT_TR_AVAILABLE:
+        print("[*] Fetching MIT Technology Review...")
+        try:
+            mit_articles = fetch_mit_review(limit=5)
+            for a in mit_articles:
+                intel["insights"].append({
+                    "source": "MIT Technology Review",
+                    "category": "MIT TR",
+                    "title": a.title,
+                    "url": a.url,
+                    "author": a.author,
+                    "time": a.pub_date,
+                    "content": a.description
+                })
+        except Exception as e:
+            print(f"  [WARN] MIT Technology Review failed: {e}")
     
     return intel
 

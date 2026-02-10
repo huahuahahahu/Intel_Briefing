@@ -35,7 +35,7 @@ def generate_report(intel: dict, date_str: str) -> str:
         f"# 🌐 全球情报日报 (Global Intel Briefing)",
         f"**日期:** {date_str}",
         f"**生成时间:** {datetime.now().strftime('%H:%M')}",
-        f"**数据源:** HN, GitHub, 36Kr, WallStreetCN, V2EX, PH, ArXiv, X, XHS",
+        f"**数据源:** HN, GitHub, 36Kr, WallStreetCN, V2EX, PH, ArXiv, X, XHS, TechCrunch, MIT TR",
         "",
         "---",
         ""
@@ -195,7 +195,7 @@ def generate_report(intel: dict, date_str: str) -> str:
     
     # --- Insights (HN Top Blogs) ---
     lines.append("## 💡 深度洞察 (Insights)")
-    lines.append("> HN Top Blogs - 精选技术博客\n")
+    lines.append("> HN Top Blogs + MIT Technology Review — 精选深度分析\n")
     
     if intel.get("insights"):
         for i, item in enumerate(intel["insights"][:5], 1):
