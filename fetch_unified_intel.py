@@ -71,6 +71,20 @@ except ImportError:
     HN_BLOGS_AVAILABLE = False
     print("[WARN] HN Top Blogs sensor not available, skipping.")
 
+try:
+    from sensors.techcrunch_rss import fetch_techcrunch
+    TC_AVAILABLE = True
+except ImportError:
+    TC_AVAILABLE = False
+    print("[WARN] TechCrunch sensor not available, skipping.")
+
+try:
+    from sensors.mit_tech_review import fetch_mit_review
+    MIT_TR_AVAILABLE = True
+except ImportError:
+    MIT_TR_AVAILABLE = False
+    print("[WARN] MIT Technology Review sensor not available, skipping.")
+
 # --- Gemini Translator ---
 try:
     from utils.gemini_translator import translate_to_chinese, summarize_blog_article
@@ -291,6 +305,24 @@ Keep it concise but informative. If no data found, say "暂无X平台讨论数�
         except Exception as e:
             print(f"  [WARN] XHS failed: {e}")
     
+    # ========== TECHCRUNCH ==========
+    if TC_AVAILABLE:
+        print("[*] Fetching TechCrunch...")
+        try:
+            tc_articles = fetch_techcrunch(limit=limit_per_source)
+            for a in tc_articles:
+                intel["tech_trends"].append({
+                    "source": "TechCrunch",
+                    "category": "TechCrunch",
+                    "title": a.title,
+                    "url": a.url,
+                    "heat": a.heat,
+                    "time": a.pub_date,
+                    "detail": a.description
+                })
+        except Exception as e:
+            print(f"  [WARN] TechCrunch failed: {e}")
+
     # ========== HN TOP BLOGS (INSIGHTS) ==========
     if HN_BLOGS_AVAILABLE:
         print("[*] Fetching HN Top Blogs (Insights)...")
@@ -308,6 +340,24 @@ Keep it concise but informative. If no data found, say "暂无X平台讨论数�
                 })
         except Exception as e:
             print(f"  [WARN] HN Blogs failed: {e}")
+
+    # ========== MIT TECHNOLOGY REVIEW (INSIGHTS) ==========
+    if MIT_TR_AVAILABLE:
+        print("[*] Fetching MIT Technology Review...")
+        try:
+            mit_articles = fetch_mit_review(limit=5)
+            for a in mit_articles:
+                intel["insights"].append({
+                    "source": "MIT Technology Review",
+                    "category": "MIT TR",
+                    "title": a.title,
+                    "url": a.url,
+                    "author": a.author,
+                    "time": a.pub_date,
+                    "content": a.description
+                })
+        except Exception as e:
+            print(f"  [WARN] MIT Technology Review failed: {e}")
     
     return intel
 
@@ -318,7 +368,7 @@ def generate_report(intel: dict, date_str: str) -> str:
         f"# 🌐 全球情报日报 (Global Intel Briefing)",
         f"**日期:** {date_str}",
         f"**生成时间:** {datetime.now().strftime('%H:%M')}",
-        f"**数据源:** HN, GitHub, 36Kr, WallStreetCN, V2EX, PH, ArXiv, X, XHS",
+        f"**数据源:** HN, GitHub, 36Kr, WallStreetCN, V2EX, PH, ArXiv, X, XHS, TechCrunch, MIT TR",
         "",
         "---",
         ""
@@ -479,7 +529,7 @@ def generate_report(intel: dict, date_str: str) -> str:
     
     # --- Insights (HN Top Blogs) ---
     lines.append("## 💡 深度洞察 (Insights)")
-    lines.append("> HN Top Blogs - 精选技术博客\n")
+    lines.append("> HN Top Blogs + MIT Technology Review — 精选深度分析\n")
     
     if intel.get("insights"):
         for i, item in enumerate(intel["insights"][:5], 1):
@@ -551,7 +601,7 @@ def main():
     print(f"\n{'='*50}")
     print(f"  Unified Intelligence Fetcher V2")
     print(f"  Date: {date_str} | Limit: {limit}/source")
-    print(f"  Sources: HN, GitHub, 36Kr, WS, V2EX, PH, ArXiv, X, XHS")
+    print(f"  Sources: HN, GitHub, 36Kr, WS, V2EX, PH, ArXiv, X, XHS, TC, MIT-TR")
     print(f"{'='*50}\n")
     
     # Fetch
