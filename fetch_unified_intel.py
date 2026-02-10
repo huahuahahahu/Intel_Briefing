@@ -581,7 +581,8 @@ def generate_report(intel: dict, date_str: str) -> str:
             if brief_cn:
                 lines.append(f"> ⚡ {brief_cn}")
             
-            lines.append(f"📍 {author}{' | 📅 ' + time_str if time_str else ''}")
+            source_label = item.get("source", "HN Top Blogs")
+            lines.append(f"📍 {source_label} | 👤 {author}{' | 📅 ' + time_str if time_str else ''}")
             
             if detail_cn:
                 lines.append("")
