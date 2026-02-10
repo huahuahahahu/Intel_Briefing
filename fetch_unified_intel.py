@@ -376,10 +376,10 @@ def generate_report(intel: dict, date_str: str) -> str:
     
     # --- Tech Trends ---
     lines.append("## 🛠️ 技术趋势 (Tech Trends)")
-    lines.append("> Hacker News + GitHub Trending\n")
+    lines.append("> Hacker News + GitHub Trending + TechCrunch\n")
     
     if intel.get("tech_trends"):
-        for i, item in enumerate(intel["tech_trends"][:10], 1):
+        for i, item in enumerate(intel["tech_trends"][:15], 1):
             title = item.get("title", "Untitled")
             url = item.get("url", "#")
             heat = item.get("heat", "")
@@ -532,7 +532,7 @@ def generate_report(intel: dict, date_str: str) -> str:
     lines.append("> HN Top Blogs + MIT Technology Review — 精选深度分析\n")
     
     if intel.get("insights"):
-        for i, item in enumerate(intel["insights"][:5], 1):
+        for i, item in enumerate(intel["insights"][:10], 1):
             title = item.get("title", "Untitled")
             url = item.get("url", "#")
             author = item.get("author", "")
