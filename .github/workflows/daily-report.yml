@@ -38,6 +38,7 @@ jobs:
         run: |
           DATE=$(date -u +%Y-%m-%d)
           REPORT="reports/daily_briefings/Morning_Report_${DATE}.md"
+          SUMMARIES="reports/summaries/${DATE}.json"
 
           if [ ! -f "$REPORT" ]; then
             echo "❌ Report not found: $REPORT"
@@ -50,10 +51,19 @@ jobs:
           git clone https://x-access-token:${PWA_DEPLOY_TOKEN}@github.com/77AutumN/intel-briefing-pwa.git /tmp/pwa
           cp "$REPORT" /tmp/pwa/data/daily_briefings/
 
+          # Copy pre-generated summaries if available
+          if [ -f "$SUMMARIES" ]; then
+            mkdir -p /tmp/pwa/public/data/summaries
+            cp "$SUMMARIES" /tmp/pwa/public/data/summaries/
+            echo "📝 Summaries found: $(wc -c < "$SUMMARIES") bytes"
+          else
+            echo "⚠️ No summaries file found, PWA will generate on build"
+          fi
+
           cd /tmp/pwa
           git config user.name "Intel Bot"
           git config user.email "bot@7brief.com"
-          git add data/daily_briefings/
+          git add data/daily_briefings/ public/data/summaries/
           git diff --cached --stat
 
           if git diff --cached --quiet; then
@@ -63,3 +73,4 @@ jobs:
             git push
             echo "✅ Report delivered to intel-briefing-pwa"
           fi
+
