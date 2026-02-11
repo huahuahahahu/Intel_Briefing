@@ -63,7 +63,8 @@ jobs:
           cd /tmp/pwa
           git config user.name "Intel Bot"
           git config user.email "bot@7brief.com"
-          git add data/daily_briefings/ public/data/summaries/
+          git add data/daily_briefings/
+          git add -f public/data/summaries/
           git diff --cached --stat
 
           if git diff --cached --quiet; then
