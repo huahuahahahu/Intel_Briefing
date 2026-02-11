@@ -87,9 +87,58 @@ def translate_to_chinese(text: str, max_chars: int = 100) -> str:
     return text[:max_chars] + "..." if len(text) > max_chars else text
 
 
+def generate_brief(content: str, category: str = "general") -> str:
+    """
+    为内容生成编辑风格的中文摘要（80-120字）。
+    替代旧的 translate+truncate 模式，输出更自然、有信息量。
+    
+    Args:
+        content: 完整的原文内容（英文或中文）
+        category: 栏目类型 (tech/research/product/insights/general)
+    
+    Returns:
+        中文摘要（80-120字），失败则返回空字符串
+    """
+    if not GEMINI_API_KEY or not content or len(content) < 20:
+        return ""
+    
+    prompt = f"""你是世界顶级的科技情报编辑。请用2-3句自然流畅的中文概括以下内容（80-120字）。
+
+要求：
+1. 第一句必须有「主角」——谁（人/公司/团队）做了什么
+2. 第二句点明为什么重要、有什么影响
+3. 语气像在跟同事分享一个有趣的发现，自然不机械
+4. 专业术语保留英文（如 LLM, FPGA, CLI）
+5. 禁止“本文介绍了”、“本研究提出了”等学术八股开头
+6. 直接输出摘要，不要任何前缀
+
+内容：
+{content[:3000]}"""
+    
+    url = f"{GEMINI_API_URL}/{MODEL_NAME}:generateContent?key={GEMINI_API_KEY}"
+    payload = {
+        "contents": [{"parts": [{"text": prompt}]}],
+        "generationConfig": {
+            "temperature": 0.5,
+            "maxOutputTokens": 256
+        }
+    }
+    
+    try:
+        response = httpx.post(url, json=payload, timeout=60)
+        response.raise_for_status()
+        data = response.json()
+        result = data.get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "")
+        return result.strip() if result else ""
+    except Exception as e:
+        print(f"    ⚠️ generate_brief 失败: {e}")
+        return ""
+
+
 def translate_summary_pair(summary: str) -> tuple[str, str]:
     """
     为 ArXiv 论文生成两层摘要（中文）。
+    Brief 使用 generate_brief（编辑风格），Detail 使用完整翻译。
     
     Args:
         summary: 英文原始摘要
@@ -100,11 +149,11 @@ def translate_summary_pair(summary: str) -> tuple[str, str]:
     if not summary:
         return ("", "")
     
-    # Brief: 翻译前100字
-    brief_cn = translate_to_chinese(summary[:200], max_chars=80)
+    # Brief: 编辑风格摘要（80-120字）
+    brief_cn = generate_brief(summary, category="research")
     
     # Detail: 翻译完整摘要
-    detail_cn = translate_to_chinese(summary, max_chars=500)
+    detail_cn = translate_to_chinese(summary, max_chars=2000)
     
     return (brief_cn, detail_cn)
 
@@ -124,14 +173,18 @@ def summarize_blog_article(content: str, mode: str = "brief") -> str:
         return ""
     
     if mode == "brief":
-        prompt = f"""请阅读以下技术博客文章，用一句话中文概括核心观点（最多100字）。
+        prompt = f"""你是世界顶级的科技情报编辑。请用2-3句自然的中文概括这篇文章的核心要点（80-120字）。
+
 要求：
-- 直接说重点，不要"本文介绍了..."这种开头
-- 忽略作者信息、日期、URL等元数据
-- 突出技术洞察或实用价值
+1. 第一句有「主角」——谁做了什么、发现了什么
+2. 补充为什么值得关注
+3. 语气像在跟同事分享有趣发现
+4. 专业术语保留英文
+5. 禁止“本文介绍了”等八股开头
+6. 忽略作者信息、日期、URL 等元数据
 
 文章内容：
-{content[:2000]}"""
+{content[:3000]}"""
         max_tokens = 256
     else:  # detail
         prompt = f"""请作为技术情报分析师，阅读以下博客文章并生成中文深度分析报告。

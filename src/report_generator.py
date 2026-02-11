@@ -12,7 +12,7 @@ from datetime import datetime
 
 # --- Gemini Translator ---
 try:
-    from utils.gemini_translator import translate_to_chinese, summarize_blog_article
+    from utils.gemini_translator import translate_to_chinese, summarize_blog_article, generate_brief
     GEMINI_AVAILABLE = True
 except ImportError:
     GEMINI_AVAILABLE = False
@@ -88,14 +88,14 @@ def generate_report(intel: dict, date_str: str) -> str:
             time_str = item.get("time", "")
             summary = item.get("summary", "").replace("\n", " ")
             
-            # Two-Tier Summary Logic (Chinese Translation)
-            # 1. Brief: Translate first ~100 chars to Chinese (~80 汉字)
-            brief_cn = translate_to_chinese(summary[:200], max_chars=80) if summary else ""
+            # Two-Tier Summary Logic
+            # 1. Brief: 编辑风格摘要（80-120字，有主角有判断）
+            brief_cn = generate_brief(summary, category="research") if summary else ""
             
             # 添加延迟以避免 API 限速 (每篇论文间隔1.5秒)
             time.sleep(1.5)
             
-            # 2. Detail: Translate full summary to Chinese (allow complete translation)
+            # 2. Detail: 完整翻译（允许完整输出）
             detail_cn = translate_to_chinese(summary, max_chars=2000) if summary else ""
             
             lines.append(f"### {i}. [{title}]({url})")
