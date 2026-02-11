@@ -136,6 +136,30 @@ def _summarize_content(content: str, title: str = "") -> str:
     return _call_gemini(prompt, max_tokens=128)
 
 
+def _translate_tagline(tagline: str, title: str = "") -> str:
+    """Translate an English product tagline to natural Chinese."""
+    if not tagline:
+        return f"📰 快讯：{title}"
+
+    prompt = f"""将以下产品标语翻译为简洁自然的中文（15字以内），保留核心卖点。
+
+要求：
+1. 直接输出翻译结果，不要任何前缀或解释
+2. 语言要通顺自然，像中文母语者写的
+3. 不要直译，要意译出产品价值
+
+产品名：{title}
+标语：{tagline}"""
+
+    result = _call_gemini(prompt, max_tokens=64)
+    if result:
+        # Clean up any quotes or prefixes the model might add
+        result = result.strip().strip('"').strip("'").strip("⚡").strip()
+        return f"⚡ {result}"
+    else:
+        return f"⚡ {tagline}"  # Fallback: keep English
+
+
 def generate_summaries(intel: dict, date_str: str) -> dict:
     """
     Generate pre-baked AI summaries from intel data.
@@ -239,20 +263,26 @@ def generate_summaries(intel: dict, date_str: str) -> dict:
             total += 1
 
             if grok_review:
-                # Has Grok review → summarize the key points
+                # Has Grok review → summarize to Chinese
                 summary = _summarize_content(grok_review, title)
                 if summary:
                     summaries[article_id] = summary
                     generated += 1
                     print(f"  [{i+1}] ✅ {title[:30]}... (from Grok)")
-                else:
-                    summaries[article_id] = f"⚡ {tagline}" if tagline else f"📰 快讯：{title}"
+                elif tagline:
+                    # Grok summarization failed, translate tagline
+                    cn = _translate_tagline(tagline, title)
+                    summaries[article_id] = cn
                     generated += 1
+                else:
+                    summaries[article_id] = f"📰 快讯：{title}"
+                    failed += 1
             elif tagline:
-                # No Grok but has tagline — use it directly
-                summaries[article_id] = f"⚡ {tagline}"
+                # No Grok but has tagline — translate to Chinese
+                cn = _translate_tagline(tagline, title)
+                summaries[article_id] = cn
                 generated += 1
-                print(f"  [{i+1}] ℹ️ {title[:30]}... (tagline)")
+                print(f"  [{i+1}] ℹ️ {title[:30]}... (tagline→CN)")
             else:
                 summaries[article_id] = f"📰 快讯：{title}"
                 failed += 1
