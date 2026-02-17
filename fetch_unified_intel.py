@@ -51,7 +51,7 @@ except ImportError:
     print("[WARN] ArXiv sensor not available, skipping.")
 
 try:
-    from sensors.x_grok_sensor import fetch_grok_intel
+    from sensors.x_grok_sensor import fetch_grok_intel, fetch_horizon_scan
     GROK_AVAILABLE = True
 except ImportError:
     GROK_AVAILABLE = False
@@ -270,24 +270,27 @@ Keep it concise but informative. If no data found, say "暂无X平台讨论数�
             print(f"  [WARN] ArXiv failed: {e}")
     
     if GROK_AVAILABLE:
-        print("[*] Fetching X (Twitter) via Grok API...")
+        print("[*] Fetching X (Twitter) via Grok HORIZON EXPANDER...")
         try:
-            # Query Grok for AI/Tech trends on X
-            grok_report = fetch_grok_intel("AI Agents, LLM, Tech Startups")
+            # 使用 HORIZON EXPANDER 5步深度协议
+            grok_report = fetch_horizon_scan(
+                focus="AI agents, LLM scaling, open source, indie hacker, global tech breakthroughs",
+                timeframe="last 48 hours"
+            )
             if grok_report and "Error" not in grok_report:
                 # Anti-Hallucination: Validate all links in Grok's output
                 validated_report = validate_grok_report(grok_report)
                 intel["social"].append({
-                    "source": "X (via Grok)",
-                    "category": "X/Grok",
+                    "source": "X (Horizon Scan)",
+                    "category": "X/Grok Horizon",
                     "content": validated_report,
                     "type": "markdown_report"
                 })
-                print("  [INFO] Grok returned X intelligence report (links validated).")
+                print("  [INFO] Grok Horizon Scan completed (links validated).")
             else:
-                print(f"  [WARN] Grok returned no data or error.")
+                print(f"  [WARN] Grok Horizon Scan returned no data or error.")
         except Exception as e:
-            print(f"  [WARN] Grok API failed: {e}")
+            print(f"  [WARN] Grok Horizon Scan failed: {e}")
     
     if XHS_AVAILABLE:
         print("[*] Generating XHS search directives...")
