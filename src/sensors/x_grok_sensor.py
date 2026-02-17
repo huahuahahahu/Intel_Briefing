@@ -105,50 +105,43 @@ def fetch_horizon_scan(
 
     today_str = datetime.datetime.now().strftime("%Y-%m-%d")
 
-    horizon_prompt = f"""You are now in GROK HORIZON EXPANDER MODE: An elite intelligence synthesizer designed to expand human worldview by surfacing the most profound, underreported, and paradigm-shifting developments occurring right now on X (Twitter).
+    horizon_prompt = f"""As a technology intelligence analyst, please conduct a comprehensive scan of current discussions on X (Twitter) and provide a structured intelligence briefing.
 
 Current Date: {today_str}
 Timeframe: {timeframe}
 Focus area: {focus}
 
-Mandatory protocol — execute every step without exception:
+Please follow this 5-step analytical framework:
 
-1. Real-Time Signal Scan
-   - Deep search current X trends, viral posts (Latest mode), semantic clusters, and sudden engagement spikes.
-   - Cross-reference with breaking web sources (avoid mainstream homepages; prioritize primary papers, patents, GitHub repos, on-the-ground accounts).
-   - Identify 8-12 raw signals that are exploding in attention but low on mainstream coverage.
+1. Signal Scan
+   Search X for the most significant recent discussions, viral posts, and emerging trends within the focus area and timeframe above. Cross-reference with primary sources (research papers, GitHub repos, official announcements). Identify 8-12 noteworthy signals that have high engagement but limited mainstream media coverage.
 
-2. Noise vs. Signal Filter
-   - Ruthlessly eliminate: political theater, celebrity drama, manufactured outrage, crypto shills, distraction events.
-   - Prioritize signals with potential for second/third-order effects on civilization (energy, computation, biology, space, power structures, human capability).
-   - Flag anything that could quietly reshape the next decade.
+2. Signal Quality Filter
+   From the signals above, filter out noise (celebrity gossip, political drama, speculative hype without substance, crypto pump schemes). Keep only signals with genuine potential for long-term, second-order effects on technology, energy, biology, space, or power structures. Narrow down to the top 4-6 highest-quality signals.
 
-3. Deep Dive on Top 4-6 Survivors
-   For each:
-   - Core breakthrough/event in plain language.
-   - Primary evidence (links, papers, posts, timestamps). MUST cite real X posts or real @usernames.
-   - Why it's underreported (incentives, narrative conflict, complexity).
-   - Paradigm-shifting implications (be bold but evidence-based).
-   - Probability of major long-term impact (assign % with justification).
+3. Deep Analysis of Top Signals
+   For each surviving signal, provide:
+   - A plain-language summary of the core development
+   - Primary evidence: cite real X posts with @usernames and timestamps, or link to real papers/repos
+   - Why this is underreported by mainstream sources
+   - Potential paradigm-shifting implications
+   - Your estimated probability of major long-term impact (with brief justification)
 
-4. Synthesis & Worldview Expansion
-   - Connect dots between the top signals — what larger picture emerges?
-   - What consensus assumptions are being quietly invalidated?
-   - One "holy shit" insight that 99% of people will miss in the noise.
+4. Cross-Signal Synthesis
+   - What larger pattern or trend connects these top signals?
+   - What widely-held assumptions are these signals quietly challenging?
+   - Identify one key non-obvious insight that most observers would miss
 
-5. Actionable Horizon (use these exact tags):
-   - [LEARN 学习]: What specific new concept or tech should the user study based on this scan?
-   - [CREATE 创作]: What content or product opportunity emerges from these signals?
-   - [ARB 套利]: What specific market, attention, or tool arbitrage opportunity is opening up?
-   - [ON HOLD 略过]: Flag one hyped signal from the scan that is noise and should be ignored.
+5. Actionable Recommendations (please use these exact label formats):
+   - [LEARN 学习]: One specific concept or technology the reader should study deeper
+   - [CREATE 创作]: One content or product opportunity that emerges from these signals
+   - [ARB 套利]: One specific market, attention, or tooling arbitrage opportunity
+   - [ON HOLD 略过]: One currently hyped signal that is actually noise and should be ignored
 
-*** CRITICAL INSTRUCTIONS ***
-1. OUTPUT LANGUAGE: The entire final output MUST be in elegant, professional Simplified Chinese (简体中文). Keep English for entity names, Twitter handles (@xxx), and URLs only.
-2. ZERO HALLUCINATION RULE: If you cannot find or verify a real account, link, or event — DROP IT entirely. Truth over comfort. Do NOT invent @usernames or fake posts.
-3. FORMAT: Use clean Markdown formatting with headers and bullet points.
-
-Operate with maximum curiosity and zero deference to institutional narratives.
-Begin now."""
+Important requirements:
+- Write the entire output in professional Simplified Chinese (简体中文). Keep English only for proper nouns, @handles, and URLs.
+- Accuracy is paramount: only cite real, verifiable accounts and posts. If you cannot verify something, omit it rather than guessing.
+- Use clean Markdown formatting with headers and bullet points."""
 
     print(f"[*] GROK HORIZON EXPANDER: Scanning X for '{focus}' ({timeframe})...")
     print(f"    This deep scan may take up to 2 minutes...")
