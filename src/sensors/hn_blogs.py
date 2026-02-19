@@ -9,12 +9,17 @@ HN Top Blogs Sensor
 """
 
 import re
+import html
 import urllib.request
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from typing import List, Optional
 from datetime import datetime
 import ssl
+import socket
+
+# 全局 TCP 超时：防 CF 盾/Tarpit 无限挂起 GitHub Actions
+socket.setdefaulttimeout(15.0)
 
 # OPML Source
 OPML_URL = "https://gist.githubusercontent.com/emschwartz/e6d2bf860ccc367fe37ff953ba6de66b/raw/hn-popular-blogs-2025.opml"
@@ -26,6 +31,12 @@ FALLBACK_FEEDS = [
     {"title": "antirez", "rss": "http://antirez.com/rss", "html": "http://antirez.com"},
     {"title": "Paul Graham", "rss": "http://www.aaronsw.com/2002/feeds/pgessays.rss", "html": "http://paulgraham.com"},
     {"title": "Pluralistic", "rss": "https://pluralistic.net/feed/", "html": "https://pluralistic.net"},
+]
+
+# Newsletter feeds — 保证每次跑批都抓取（不依赖 OPML 是否包含）
+NEWSLETTER_FEEDS = [
+    {"title": "Latent Space", "rss": "https://www.latent.space/feed", "html": "https://www.latent.space"},
+    {"title": "Ahead of AI", "rss": "https://magazine.sebastianraschka.com/feed", "html": "https://magazine.sebastianraschka.com"},
 ]
 
 # Config
@@ -42,6 +53,7 @@ class BlogArticle:
     source: str
     pub_date: str = ""
     content: str = ""  # Article description/summary from RSS
+    author: str = ""   # Real author from dc:creator/author tag
 
 
 def _strip_html(text: str) -> str:
@@ -71,7 +83,7 @@ def _fetch_url(url: str, timeout: int = FETCH_TIMEOUT) -> Optional[str]:
     """Fetch URL content with timeout and error handling."""
     try:
         req = urllib.request.Request(url, headers={
-            "User-Agent": "Intel-Briefing-RSS-Reader/1.0"
+            "User-Agent": "Mozilla/5.0 (compatible; 7Brief/1.0; +https://7brief.com)"
         })
         with urllib.request.urlopen(req, timeout=timeout, context=_create_ssl_context()) as response:
             return response.read().decode('utf-8', errors='ignore')
@@ -100,6 +112,31 @@ def parse_opml(opml_content: str) -> List[dict]:
     return blogs
 
 
+def _extract_author(entry, ns=None) -> str:
+    """Extract author from RSS/Atom entry with type-safe fallback chain."""
+    raw = None
+    if ns:
+        # Atom: <atom:author><atom:name>
+        author_el = entry.find('atom:author/atom:name', ns)
+        if author_el is None:
+            author_el = entry.find('atom:author', ns)
+        if author_el is not None and author_el.text:
+            raw = author_el.text
+    if raw is None:
+        # RSS 2.0: <dc:creator> or <author>
+        dc_ns = {'dc': 'http://purl.org/dc/elements/1.1/'}
+        creator = entry.find('dc:creator', dc_ns)
+        if creator is None:
+            creator = entry.find('author')
+        if creator is not None and creator.text:
+            raw = creator.text
+    if raw is None:
+        return ""
+    # Sanitize: unescape HTML entities, strip control chars, truncate
+    safe = html.unescape(str(raw)).replace('\n', ' ').replace('\r', '').strip()
+    return safe[:40]
+
+
 def parse_rss_feed(feed_content: str, source_title: str) -> List[BlogArticle]:
     """Parse RSS/Atom feed content to extract articles."""
     articles = []
@@ -121,6 +158,7 @@ def parse_rss_feed(feed_content: str, source_title: str) -> List[BlogArticle]:
                 link_href = link.get('href', '') if link is not None else ""
                 pub_text = published.text[:10] if published is not None and published.text else ""
                 content_text = _strip_html(summary.text) if summary is not None and summary.text else ""
+                author_text = _extract_author(entry, ns)
                 
                 if title_text and link_href:
                     articles.append(BlogArticle(
@@ -128,7 +166,8 @@ def parse_rss_feed(feed_content: str, source_title: str) -> List[BlogArticle]:
                         url=link_href,
                         source=source_title,
                         pub_date=pub_text,
-                        content=content_text
+                        content=content_text,
+                        author=author_text
                     ))
         
         # Handle RSS 2.0 feeds
@@ -145,6 +184,7 @@ def parse_rss_feed(feed_content: str, source_title: str) -> List[BlogArticle]:
                 link_text = link.text if link is not None and link.text else ""
                 pub_text = pub_date.text[:16] if pub_date is not None and pub_date.text else ""
                 content_text = _strip_html(description.text) if description is not None and description.text else ""
+                author_text = _extract_author(item)
                 
                 if title_text and link_text:
                     articles.append(BlogArticle(
@@ -152,7 +192,8 @@ def parse_rss_feed(feed_content: str, source_title: str) -> List[BlogArticle]:
                         url=link_text,
                         source=source_title,
                         pub_date=pub_text,
-                        content=content_text
+                        content=content_text,
+                        author=author_text
                     ))
     except ET.ParseError as e:
         print(f"    [WARN] XML parse error for {source_title}: {e}")
@@ -187,19 +228,41 @@ def fetch_hn_blogs(limit: int = 5) -> List[BlogArticle]:
         print("    [ERROR] No blogs available")
         return []
     
-    # 2. Fetch RSS from top N blogs
+    # 1.5. Identify newsletter feeds already in OPML (for dedup)
+    existing_rss = {b["rss"] for b in blogs}
+    newsletters_to_fetch = [nf for nf in NEWSLETTER_FEEDS if nf["rss"] not in existing_rss]
+    for nf in newsletters_to_fetch:
+        print(f"    [+] Newsletter queued: {nf['title']}")
+    
+    # 2. Fetch RSS from top N OPML blogs
     all_articles = []
     blogs_to_fetch = blogs[:MAX_BLOGS_TO_FETCH]
     
     for i, blog in enumerate(blogs_to_fetch):
-        feed_content = _fetch_url(blog["rss"])
-        if feed_content:
-            articles = parse_rss_feed(feed_content, blog["title"])
-            all_articles.extend(articles)
-            if articles:
-                print(f"    [{i+1}/{len(blogs_to_fetch)}] {blog['title']}: {len(articles)} articles")
-        else:
-            print(f"    [{i+1}/{len(blogs_to_fetch)}] {blog['title']}: failed")
+        try:
+            feed_content = _fetch_url(blog["rss"])
+            if feed_content:
+                articles = parse_rss_feed(feed_content, blog["title"])
+                all_articles.extend(articles)
+                if articles:
+                    print(f"    [{i+1}/{len(blogs_to_fetch)}] {blog['title']}: {len(articles)} articles")
+            else:
+                print(f"    [{i+1}/{len(blogs_to_fetch)}] {blog['title']}: failed")
+        except Exception as e:
+            print(f"    [{i+1}/{len(blogs_to_fetch)}] {blog['title']}: ERROR {e}")
+    
+    # 2.5. Fetch newsletter feeds (guaranteed, outside top-N limit)
+    for nf in newsletters_to_fetch:
+        try:
+            feed_content = _fetch_url(nf["rss"])
+            if feed_content:
+                articles = parse_rss_feed(feed_content, nf["title"])
+                all_articles.extend(articles)
+                print(f"    [NL] {nf['title']}: {len(articles)} articles")
+            else:
+                print(f"    [NL] {nf['title']}: failed")
+        except Exception as e:
+            print(f"    [NL] {nf['title']}: ERROR {e}")
     
     # 3. Sort by date and return top N
     # Note: Date parsing is best-effort

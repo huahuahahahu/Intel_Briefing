@@ -401,7 +401,7 @@ Keep it concise but informative. If no data found, say "暂无X平台讨论数�
                     "category": "HN Blogs",
                     "title": article.title,
                     "url": article.url,
-                    "author": article.source,
+                    "author": article.author or article.source,
                     "time": article.pub_date,
                     "content": article.content  # NEW: Article description from RSS
                 })
