@@ -458,8 +458,37 @@ def generate_report(intel: dict, date_str: str) -> str:
             time_str = item.get("time", "")
             cat = item.get("category", "")
             
+            # === JINA FULL-CONTENT ANALYSIS ===
+            source_text = ""
+            # Filter out unreadable extensions and media domains
+            skip_extensions = ('.pdf', '.mp4', '.mov')
+            skip_domains = ('youtube.com/', 'vimeo.com/')
+            
+            if JINA_AVAILABLE and url and url.startswith("http") and not url.lower().endswith(skip_extensions) and not any(d in url.lower() for d in skip_domains):
+                print(f"  [TechTrends {i}] Fetching full content via Jina...")
+                full_content = fetch_full_content(url)
+                if full_content and len(full_content) > 100:
+                    source_text = full_content
+                    print(f"  [TechTrends {i}] Fetched via Jina ({len(source_text)} chars)")
+            
+            brief_cn = ""
+            detail_cn = ""
+            if source_text and GEMINI_AVAILABLE:
+                import time
+                brief_cn = summarize_blog_article(source_text, mode="brief")
+                time.sleep(1.5)  # Rate limit protection
+                detail_cn = summarize_blog_article(source_text, mode="detail")
+            
             lines.append(f"### {i}. [{title}]({url})")
+            if brief_cn:
+                lines.append(f"> ⚡ {brief_cn}")
+                
             lines.append(f"📍 {cat} | 🔥 {heat} | 🕒 {time_str}")
+            
+            if detail_cn:
+                lines.append("")
+                lines.append(f"**详情:** {detail_cn}")
+                
             lines.append("")
     else:
         lines.append("*暂无数据*\n")
