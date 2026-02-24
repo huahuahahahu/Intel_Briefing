@@ -225,6 +225,124 @@ def summarize_blog_article(content: str, mode: str = "brief") -> str:
         return ""
 
 
+def generate_news_brief(title: str, content: str = "", category: str = "tech") -> str:
+    """
+    为 Tech/Capital 类新闻生成情报风格的中文短报（80-120字）。
+    包含 [JUNK] 熔断协议：如果内容是垃圾，AI 返回 [JUNK] 时自动降级为标题推断。
+    Ported from PWA's pre-generate-summaries.mjs.
+    
+    Args:
+        title: 文章标题
+        content: 文章全文或片段（可以为空，此时做标题推断）
+        category: 栏目类型 (tech/capital)
+    
+    Returns:
+        中文短报（80-120字），失败则返回空字符串
+    """
+    if not GEMINI_API_KEY or not title:
+        return ""
+    
+    # 无内容时做标题推断
+    if not content or len(content.strip()) < 20:
+        prompt = f"""根据标题推断内容，用1-2句中文描述（40-80字）。
+
+标题：「{title}」
+
+规则：
+1. 第一句直接说「谁/哪家公司 + 做了什么」，如果标题有具体人名或公司名必须写出。
+2. 绝对禁止用「这篇文章大概讲的是」「这篇文章大概在说」「本文介绍了」等废话开头。
+3. 只推断大方向，不要编造具体数据。不要提及来源名称。
+4. 语气自然，像跟同事聊天。直接输出。"""
+        max_tokens = 128
+    else:
+        # 有内容时生成完整短报，含 [JUNK] 熔断
+        prompt = f"""你是 7Brief 的首席科技情报特工。将以下长文本提炼为 100 字以内的高信息密度中文短报。
+
+标题：{title}
+正文：{content[:3000]}
+
+规则（违背将被阻断）：
+1. 垃圾熔断：如果正文包含 "Access Denied"、"Just a moment"、"Enable JavaScript"、"403 Forbidden"，或者是乱码，或者内容极短且与标题无关 → 你必须且只能输出 [JUNK]，绝不允许强行编造。
+2. 禁止八股开头："本文介绍了"、"这篇文章讲述了"、"该文探讨了" 等一律禁止。
+3. 第一句：直接点明「谁/哪家公司 + 做了什么」。尽可能写出具体人名/公司名，避免用「作者」「该团队」等模糊指代。
+4. 第二句：说明「为什么重要/行业影响」。
+5. 术语保留英文（Agent, LLM, API, FPGA, CLI）。
+6. 直接输出摘要，不要前缀。"""
+        max_tokens = 256
+    
+    url = f"{GEMINI_API_URL}/{MODEL_NAME}:generateContent?key={GEMINI_API_KEY}"
+    payload = {
+        "contents": [{"parts": [{"text": prompt}]}],
+        "generationConfig": {
+            "temperature": 0.3,
+            "maxOutputTokens": max_tokens
+        }
+    }
+    
+    try:
+        response = httpx.post(url, json=payload, timeout=60)
+        response.raise_for_status()
+        data = response.json()
+        result = data.get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "")
+        
+        if not result:
+            return ""
+        
+        result = result.strip()
+        
+        # [JUNK] 熔断：AI 自己检测到垃圾内容
+        if "[JUNK]" in result:
+            print(f"    🚧 [JUNK] AI 检测到垃圾内容: {title[:30]}...")
+            # 降级为标题推断（递归，无内容模式）
+            return generate_news_brief(title, "", category)
+        
+        return result
+    except Exception as e:
+        print(f"    ⚠️ generate_news_brief 失败: {e}")
+        return ""
+
+
+def expand_product_tagline(name: str, tagline: str) -> str:
+    """
+    将 Product Hunt 英文 tagline 扩展为中文产品定位描述（30-60字）。
+    Ported from PWA's pre-generate-summaries.mjs P1 product tagline expansion.
+    
+    Args:
+        name: 产品名称
+        tagline: 英文 tagline
+    
+    Returns:
+        中文产品描述（30-60字），失败则返回空字符串
+    """
+    if not GEMINI_API_KEY or not name:
+        return ""
+    
+    prompt = f"""这是一个新产品：
+名称：{name}
+标语：{tagline or '(无)'}
+
+请用一句自然中文描述这个产品的定位和卖点（30-60字）。直接输出，不要前缀。"""
+    
+    url = f"{GEMINI_API_URL}/{MODEL_NAME}:generateContent?key={GEMINI_API_KEY}"
+    payload = {
+        "contents": [{"parts": [{"text": prompt}]}],
+        "generationConfig": {
+            "temperature": 0.4,
+            "maxOutputTokens": 128
+        }
+    }
+    
+    try:
+        response = httpx.post(url, json=payload, timeout=60)
+        response.raise_for_status()
+        data = response.json()
+        result = data.get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "")
+        return result.strip() if result else ""
+    except Exception as e:
+        print(f"    ⚠️ expand_product_tagline 失败: {e}")
+        return ""
+
+
 if __name__ == "__main__":
     # Test translation
     test_text = "Adapting large pretrained models to new tasks efficiently and continually is crucial for real-world deployment but remains challenging due to catastrophic forgetting."
