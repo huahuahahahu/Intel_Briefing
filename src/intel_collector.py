@@ -53,12 +53,6 @@ except ImportError:
     GROK_AVAILABLE = False
     print("[WARN] Grok (X/Twitter) sensor not available, skipping.")
 
-try:
-    from sensors.xhs_radar import XHSRadar
-    XHS_AVAILABLE = True
-except ImportError:
-    XHS_AVAILABLE = False
-    print("[WARN] XHS (Xiaohongshu) sensor not available, skipping.")
 
 try:
     from sensors.hn_blogs import fetch_hn_blogs
@@ -136,7 +130,6 @@ def fetch_all_sources(limit_per_source: int = 10) -> dict:
         "community": [],        # V2EX
         "research": [],         # ArXiv
         "social": [],           # X (Twitter)
-        "xhs_directives": [],   # XHS (manual search links)
         "insights": []          # HN Top Blogs (深度洞察)
     }
     
@@ -266,21 +259,6 @@ Keep it concise but informative. If no data found, say "暂无X平台讨论数�
         except Exception as e:
             print(f"  [WARN] Grok API failed: {e}")
     
-    if XHS_AVAILABLE:
-        print("[*] Generating XHS search directives...")
-        try:
-            radar = XHSRadar()
-            leads = radar.fetch_leads()
-            for lead in leads[:8]:  # Top 8 search queries
-                intel["xhs_directives"].append({
-                    "source": "小红书",
-                    "category": "XHS",
-                    "title": lead.title,
-                    "url": lead.url,
-                    "summary": lead.summary
-                })
-        except Exception as e:
-            print(f"  [WARN] XHS failed: {e}")
     
     # ========== TECHCRUNCH ==========
     if TC_AVAILABLE:
