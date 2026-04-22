@@ -15,10 +15,7 @@ from dataclasses import dataclass, field
 from typing import Optional
 
 # Use unified config layer
-try:
-    from config import cfg
-except ImportError:
-    from src.config import cfg
+from src.config import cfg
 
 # Use httpx if available, fall back to requests
 try:

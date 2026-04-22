@@ -15,10 +15,7 @@ from typing import Optional
 logger = logging.getLogger(__name__)
 
 # Import from centralized config
-try:
-    from config import JINA_READER_URL, JINA_TIMEOUT, JINA_MAX_CHARS
-except ImportError:
-    from src.config import JINA_READER_URL, JINA_TIMEOUT, JINA_MAX_CHARS
+from src.config import JINA_READER_URL, JINA_TIMEOUT, JINA_MAX_CHARS
 
 
 def fetch_full_content(url: str, timeout: int = JINA_TIMEOUT) -> Optional[str]:

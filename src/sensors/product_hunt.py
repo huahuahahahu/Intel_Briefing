@@ -26,10 +26,7 @@ class PHProduct:
     thumbnail_url: Optional[str] = None
 
 # Use unified config layer
-try:
-    from config import cfg
-except ImportError:
-    from src.config import cfg
+from src.config import cfg
 
 def fetch_trending_products(limit: int = 10) -> List[PHProduct]:
     """Fetch trending products from Product Hunt."""

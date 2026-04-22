@@ -11,37 +11,22 @@ from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
-# Import from centralized config
-try:
-    from config import GEMINI_RATE_LIMIT_DELAY
-except ImportError:
-    try:
-        from src.config import GEMINI_RATE_LIMIT_DELAY
-    except ImportError:
-        GEMINI_RATE_LIMIT_DELAY = 1.5
+from src.config import GEMINI_RATE_LIMIT_DELAY
 
 # --- Gemini Translator ---
 try:
-    from utils.gemini_translator import translate_to_chinese, summarize_blog_article, generate_brief
+    from src.utils.gemini_translator import translate_to_chinese, summarize_blog_article, generate_brief
     GEMINI_AVAILABLE = True
 except ImportError:
-    try:
-        from src.utils.gemini_translator import translate_to_chinese, summarize_blog_article, generate_brief
-        GEMINI_AVAILABLE = True
-    except ImportError:
-        GEMINI_AVAILABLE = False
+    GEMINI_AVAILABLE = False
 
 # --- Jina Reader (Full Content Fetcher) ---
 try:
-    from utils.jina_reader import fetch_full_content
+    from src.utils.jina_reader import fetch_full_content
     JINA_AVAILABLE = True
 except ImportError:
-    try:
-        from src.utils.jina_reader import fetch_full_content
-        JINA_AVAILABLE = True
-    except ImportError:
-        JINA_AVAILABLE = False
-        logger.info("Jina Reader not available, using RSS description only.")
+    JINA_AVAILABLE = False
+    logger.info("Jina Reader not available, using RSS description only.")
 
 if not GEMINI_AVAILABLE:
     logger.info("Gemini translator not available, using English summaries.")
@@ -150,10 +135,20 @@ def generate_report(intel: dict, date_str: str) -> str:
             heat = item.get("heat", "")
             tagline = item.get("tagline", "")
             grok_review = item.get("grok_review")
+            topics = item.get("topics", [])
 
-            lines.append(f"### {i}. [{title}]({url})")
-            lines.append(f"> {tagline}")
-            lines.append(f"🔥 {heat}")
+            # Anti-hallucination: Grok fallback URLs are guessed slugs, not real links
+            is_grok_fallback = "grok-fallback" in topics
+            if is_grok_fallback:
+                from urllib.parse import quote
+                search_url = f"https://www.google.com/search?q=site:producthunt.com+{quote(title)}"
+                lines.append(f"### {i}. {title}")
+                lines.append(f"> {tagline}")
+                lines.append(f"⚠️ *链接未验证 (AI 推断)* | [🔍 搜索验证]({search_url})")
+            else:
+                lines.append(f"### {i}. [{title}]({url})")
+                lines.append(f"> {tagline}")
+                lines.append(f"🔥 {heat}")
             lines.append("")
 
             if grok_review:

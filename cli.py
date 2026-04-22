@@ -12,11 +12,6 @@ import os
 import argparse
 from datetime import datetime
 
-# Add src to path for modular imports
-SRC_PATH = os.path.join(os.path.dirname(__file__), 'src')
-if SRC_PATH not in sys.path:
-    sys.path.insert(0, SRC_PATH)
-
 from src.intel_collector import fetch_all_sources
 from src.report_generator import generate_report
 

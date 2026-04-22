@@ -5,7 +5,7 @@ import json
 import httpx
 
 # Use unified config layer
-from config import cfg
+from src.config import cfg
 
 # Force UTF-8 stdout for Windows
 sys.stdout.reconfigure(encoding='utf-8')

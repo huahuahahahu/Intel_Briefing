@@ -64,6 +64,7 @@ class IntelConfig:
     grok_timeout: int = 120
     limit_per_source: int = 10
     max_hn_blogs: int = 5
+    content_truncate_limit: int = 3000
     gemini_rate_limit_delay: float = 1.5
 
     # === Feature Flags ===
@@ -97,6 +98,7 @@ class IntelConfig:
             grok_timeout=int(os.getenv("GROK_TIMEOUT", "120")),
             limit_per_source=int(os.getenv("LIMIT_PER_SOURCE", "10")),
             max_hn_blogs=int(os.getenv("MAX_HN_BLOGS", "5")),
+            content_truncate_limit=int(os.getenv("CONTENT_TRUNCATE_LIMIT", "3000")),
             enable_grok_sentiment=os.getenv("ENABLE_GROK_SENTIMENT", "true").lower() == "true",
             enable_link_verification=os.getenv("ENABLE_LINK_VERIFICATION", "true").lower() == "true",
         )
@@ -127,3 +129,4 @@ GEMINI_MAX_RETRIES = cfg.gemini_max_retries
 JINA_READER_URL = cfg.jina_reader_url
 JINA_TIMEOUT = cfg.jina_timeout
 JINA_MAX_CHARS = cfg.jina_max_chars
+CONTENT_TRUNCATE_LIMIT = cfg.content_truncate_limit

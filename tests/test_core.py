@@ -6,10 +6,6 @@ import sys
 import os
 import pytest
 
-# Path setup
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
-
 
 class TestConfig:
     """测试配置模块。"""

@@ -19,13 +19,7 @@ HEADERS = {
 }
 
 # Import from centralized config
-try:
-    from config import CONTENT_TRUNCATE_LIMIT
-except ImportError:
-    try:
-        from src.config import CONTENT_TRUNCATE_LIMIT
-    except ImportError:
-        CONTENT_TRUNCATE_LIMIT = 3000
+from src.config import CONTENT_TRUNCATE_LIMIT
 
 
 def _validate_url(url: str) -> bool:

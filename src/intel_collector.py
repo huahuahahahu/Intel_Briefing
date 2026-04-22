@@ -29,14 +29,9 @@ if not logger.handlers:
     logger.addHandler(_handler)
     logger.setLevel(logging.INFO)
 
-# --- Path Setup ---
-LOCAL_SRC_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'src')
-if LOCAL_SRC_PATH not in sys.path:
-    sys.path.insert(0, LOCAL_SRC_PATH)
-
 # --- Imports: External (internalized in src/external/) ---
 try:
-    from external.fetch_news import (
+    from src.external.fetch_news import (
         fetch_hackernews,
         fetch_github,
         fetch_36kr,
@@ -50,49 +45,49 @@ except ImportError as e:
 
 # --- Imports: Local Sensors ---
 try:
-    from sensors.product_hunt import fetch_trending_products
+    from src.sensors.product_hunt import fetch_trending_products
     PH_AVAILABLE = True
 except ImportError:
     PH_AVAILABLE = False
     print("[WARN] Product Hunt sensor not available, skipping.")
 
 try:
-    from sensors.arxiv_ai import fetch_ai_papers
+    from src.sensors.arxiv_ai import fetch_ai_papers
     ARXIV_AVAILABLE = True
 except ImportError:
     ARXIV_AVAILABLE = False
     print("[WARN] ArXiv sensor not available, skipping.")
 
 try:
-    from sensors.x_grok_sensor import fetch_grok_intel
+    from src.sensors.x_grok_sensor import fetch_grok_intel
     GROK_AVAILABLE = True
 except ImportError:
     GROK_AVAILABLE = False
     print("[WARN] Grok (X/Twitter) sensor not available, skipping.")
 
 try:
-    from sensors.hf_daily_papers import fetch_hf_daily_papers
+    from src.sensors.hf_daily_papers import fetch_hf_daily_papers
     HF_PAPERS_AVAILABLE = True
 except ImportError:
     HF_PAPERS_AVAILABLE = False
     print("[WARN] HF Daily Papers sensor not available, skipping.")
 
 try:
-    from sensors.hn_blogs import fetch_hn_blogs
+    from src.sensors.hn_blogs import fetch_hn_blogs
     HN_BLOGS_AVAILABLE = True
 except ImportError:
     HN_BLOGS_AVAILABLE = False
     print("[WARN] HN Top Blogs sensor not available, skipping.")
 
 try:
-    from sensors.techcrunch_rss import fetch_techcrunch
+    from src.sensors.techcrunch_rss import fetch_techcrunch
     TC_AVAILABLE = True
 except ImportError:
     TC_AVAILABLE = False
     print("[WARN] TechCrunch sensor not available, skipping.")
 
 try:
-    from sensors.mit_tech_review import fetch_mit_review
+    from src.sensors.mit_tech_review import fetch_mit_review
     MIT_TR_AVAILABLE = True
 except ImportError:
     MIT_TR_AVAILABLE = False
@@ -100,7 +95,7 @@ except ImportError:
 
 # --- Anti-Hallucination: Link Verifier ---
 try:
-    from utils.verifier import verify_link
+    from src.utils.verifier import verify_link
     VERIFIER_AVAILABLE = True
 except ImportError:
     VERIFIER_AVAILABLE = False

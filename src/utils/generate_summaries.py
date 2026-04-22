@@ -12,14 +12,13 @@ import sys
 import json
 import time
 import httpx
-from dotenv import load_dotenv
 
-load_dotenv()
+from src.config import cfg
 
-# --- Config ---
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models"
-MODEL_NAME = "gemini-2.5-flash-lite"
+# --- Config (from unified config layer) ---
+GEMINI_API_KEY = cfg.gemini_api_key
+GEMINI_API_URL = cfg.gemini_api_url
+MODEL_NAME = "gemini-2.5-flash-lite"  # summaries use lite model for cost
 
 # Jina Reader for fetching article content
 JINA_TIMEOUT = 12  # seconds
