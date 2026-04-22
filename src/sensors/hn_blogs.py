@@ -72,11 +72,8 @@ def _strip_html(text: str) -> str:
 
 
 def _create_ssl_context():
-    """Create SSL context that ignores certificate errors (for some blogs)."""
-    ctx = ssl.create_default_context()
-    ctx.check_hostname = False
-    ctx.verify_mode = ssl.CERT_NONE
-    return ctx
+    """Create SSL context with proper certificate verification."""
+    return ssl.create_default_context()
 
 
 def _fetch_url(url: str, timeout: int = FETCH_TIMEOUT) -> Optional[str]:

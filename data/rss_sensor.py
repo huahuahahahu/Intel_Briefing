@@ -10,20 +10,8 @@ from dataclasses import dataclass, field
 from typing import List, Optional
 import xml.etree.ElementTree as ET
 
-# Auto-install dependencies
-try:
-    import feedparser
-except ImportError:
-    import subprocess
-    subprocess.run([sys.executable, "-m", "pip", "install", "feedparser", "-q"])
-    import feedparser
-
-try:
-    import httpx
-except ImportError:
-    import subprocess
-    subprocess.run([sys.executable, "-m", "pip", "install", "httpx", "-q"])
-    import httpx
+import feedparser
+import httpx
 
 # Add local src for Grok sensor
 LOCAL_SRC_PATH = os.path.join(os.path.dirname(__file__), '..', 'src')

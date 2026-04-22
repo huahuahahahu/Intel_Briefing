@@ -1,0 +1,20 @@
+version: "3.9"
+
+services:
+  intel-engine:
+    build: .
+    env_file: .env
+    volumes:
+      - ./reports:/app/reports    # Persist generated reports
+      - ./data:/app/data          # OPML and local data files
+    environment:
+      - PYTHONUNBUFFERED=1        # Real-time log output
+      - FETCH_TIMEOUT=15
+      - GROK_TIMEOUT=120
+    command: ["--limit", "10"]
+    # Resource limits matching GitHub Actions runner
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 2G

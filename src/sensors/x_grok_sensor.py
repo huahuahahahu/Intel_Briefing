@@ -3,19 +3,17 @@ import sys
 import datetime
 import json
 import httpx
-from dotenv import load_dotenv
+
+# Use unified config layer
+from config import cfg
 
 # Force UTF-8 stdout for Windows
 sys.stdout.reconfigure(encoding='utf-8')
 
-# Load environment variables
-load_dotenv()
-
-# Configuration
-XAI_API_KEY = os.getenv("XAI_API_KEY")
-# Default to official endpoint, but allow override for Relay Services (中转站)
-XAI_BASE_URL = os.getenv("XAI_BASE_URL", "https://api.x.ai/v1/chat/completions")
-MODEL_NAME = os.getenv("XAI_MODEL", "grok-beta")  # Relay users: set to 'grok-3' or 'grok-4'
+# Configuration (from unified config)
+XAI_API_KEY = cfg.xai_api_key
+XAI_BASE_URL = cfg.xai_base_url
+MODEL_NAME = cfg.xai_model
 
 def fetch_grok_intel(query: str, override_prompt: str = None, timeout: int = 60, plugins: list = None) -> str:
     """

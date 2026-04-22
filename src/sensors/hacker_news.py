@@ -7,12 +7,7 @@ import json
 from dataclasses import dataclass
 from typing import List, Optional
 
-try:
-    import httpx
-except ImportError:
-    import subprocess
-    subprocess.run([sys.executable, "-m", "pip", "install", "httpx", "-q"])
-    import httpx
+import httpx
 
 @dataclass
 class HNStory:

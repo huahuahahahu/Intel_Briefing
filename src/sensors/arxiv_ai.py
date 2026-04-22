@@ -8,12 +8,7 @@ from dataclasses import dataclass
 from typing import List
 from datetime import datetime
 
-try:
-    import httpx
-except ImportError:
-    import subprocess
-    subprocess.run([sys.executable, "-m", "pip", "install", "httpx", "-q"])
-    import httpx
+import httpx
 
 @dataclass
 class ArxivPaper:

@@ -14,6 +14,9 @@ import datetime
 from dataclasses import dataclass, field
 from typing import Optional
 
+# Use unified config layer
+from config import cfg
+
 # Use httpx if available, fall back to requests
 try:
     import httpx
@@ -42,47 +45,15 @@ class GitHubTrend:
     hype_score: int = field(init=False)
 
     def __post_init__(self):
-        # Calculate hype: stars relative to age would be cool, 
-        # but for now simple log scale of stars for "recently created" items
         import math
-        # If it's new (search query ensures this), raw stars is a good proxy for hype
         self.hype_score = min(100, int(math.log10(max(self.stars, 1)) * 25))
-
-def load_env_token() -> Optional[str]:
-    """Load GITHUB_TOKEN from .env file manually."""
-    # Strategy: Start with relative path, fallback to CWD
-    candidates = [
-        os.path.join(os.path.dirname(__file__), "..", ".env"),
-        os.path.join(os.getcwd(), ".env")
-    ]
-    
-    for env_path in candidates:
-        if os.path.exists(env_path):
-            try:
-                # utf-8-sig handles BOM which is common on Windows
-                with open(env_path, "r", encoding="utf-8-sig", errors="ignore") as f:
-                    for line in f:
-                        line = line.strip()
-                        if not line or line.startswith("#"): continue
-                        
-                        # Case 1: Standard Key=Value
-                        if "GITHUB_TOKEN=" in line:
-                            return line.split("=", 1)[1].strip()
-                            
-                        # Case 2: Raw Token (User just pasted the token)
-                        if line.startswith("ghp_") or line.startswith("github_pat_"):
-                            return line
-            except Exception:
-                pass
-                
-    return os.environ.get("GITHUB_TOKEN")
 
 def fetch_trending(language: Optional[str] = None) -> list[GitHubTrend]:
     """
     Fetch trending repositories using GitHub GraphQL API.
     Strategy: Search for repos created in the last 7 days, sorted by stars.
     """
-    token = load_env_token()
+    token = cfg.github_token
     if not token:
         print("ERROR: GITHUB_TOKEN not found in .env or environment variables.")
         return []
