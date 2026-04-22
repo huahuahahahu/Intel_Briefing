@@ -109,6 +109,22 @@ def _safe_print(msg: str):
         print(msg)
 
 
+def _dedup_items(items: list[dict]) -> list[dict]:
+    """Deduplicate intel items by normalized title.
+    
+    Items with empty titles are always kept (no key to dedup on).
+    """
+    seen = set()
+    result = []
+    for item in items:
+        title = item.get("title", "").strip().lower()
+        if not title or title not in seen:
+            if title:
+                seen.add(title)
+            result.append(item)
+    return result
+
+
 def validate_grok_report(markdown_content: str) -> str:
     """
     Anti-Hallucination Layer: Extract and validate all links in Grok's output.

@@ -15,16 +15,18 @@ class TestConfig:
     """测试配置模块。"""
 
     def test_config_imports(self):
-        from src.config import setup_logging, GEMINI_API_URL, JINA_READER_URL
+        from src.config import cfg, GEMINI_API_URL, JINA_READER_URL
         assert GEMINI_API_URL.startswith("https://")
         assert JINA_READER_URL.startswith("https://")
+        assert cfg.fetch_timeout > 0
 
-    def test_setup_logging(self):
-        from src.config import setup_logging
-        setup_logging(level="DEBUG")
-        import logging
-        logger = logging.getLogger("test")
-        assert logger is not None
+    def test_config_has_all_keys(self):
+        from src.config import cfg
+        # Verify all critical fields exist
+        assert hasattr(cfg, 'gemini_api_url')
+        assert hasattr(cfg, 'xai_base_url')
+        assert hasattr(cfg, 'jina_reader_url')
+        assert hasattr(cfg, 'gemini_rate_limit_delay')
 
 
 class TestDedup:
