@@ -263,6 +263,7 @@ def _fetch_product_hunt(limit):
             "title": p.name, "url": p.url,
             "heat": f"{p.votes_count} votes",
             "time": "Today", "tagline": p.tagline,
+            "topics": p.topics or [],   # Critical: pass through for anti-hallucination
             "grok_review": None
         })
     return "Product Hunt", "product_gems", results
