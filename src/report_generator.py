@@ -25,15 +25,23 @@ try:
     from utils.gemini_translator import translate_to_chinese, summarize_blog_article, generate_brief
     GEMINI_AVAILABLE = True
 except ImportError:
-    GEMINI_AVAILABLE = False
+    try:
+        from src.utils.gemini_translator import translate_to_chinese, summarize_blog_article, generate_brief
+        GEMINI_AVAILABLE = True
+    except ImportError:
+        GEMINI_AVAILABLE = False
 
 # --- Jina Reader (Full Content Fetcher) ---
 try:
     from utils.jina_reader import fetch_full_content
     JINA_AVAILABLE = True
 except ImportError:
-    JINA_AVAILABLE = False
-    logger.info("Jina Reader not available, using RSS description only.")
+    try:
+        from src.utils.jina_reader import fetch_full_content
+        JINA_AVAILABLE = True
+    except ImportError:
+        JINA_AVAILABLE = False
+        logger.info("Jina Reader not available, using RSS description only.")
 
 if not GEMINI_AVAILABLE:
     logger.info("Gemini translator not available, using English summaries.")
