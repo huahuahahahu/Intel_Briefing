@@ -273,12 +273,20 @@ def fetch_hn_blogs(limit: int = 5) -> List[BlogArticle]:
             print(f"    [NL] {nf['title']}: ERROR {e}")
     
     # 3. Sort by date and return top N
-    # Note: Date parsing is best-effort
+    # Note: Date parsing is best-effort (supports ISO 8601 + RFC822)
     def parse_date(article):
+        if not article.pub_date:
+            return datetime.min
+        # Try ISO 8601 first (Atom feeds)
         try:
-            if article.pub_date:
-                return datetime.fromisoformat(article.pub_date.replace('Z', '+00:00'))
-        except:
+            return datetime.fromisoformat(article.pub_date.replace('Z', '+00:00'))
+        except (ValueError, TypeError):
+            pass
+        # Try RFC822 (RSS 2.0 feeds like OpenAI, Cloudflare, GitHub)
+        try:
+            from email.utils import parsedate_to_datetime
+            return parsedate_to_datetime(article.pub_date)
+        except Exception:
             pass
         return datetime.min
     

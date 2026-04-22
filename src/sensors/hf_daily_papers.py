@@ -16,7 +16,10 @@ except Exception:
 import httpx
 
 # Reuse ArxivPaper dataclass for compatibility
-from sensors.arxiv_ai import ArxivPaper
+try:
+    from sensors.arxiv_ai import ArxivPaper
+except ImportError:
+    from src.sensors.arxiv_ai import ArxivPaper
 
 HF_DAILY_PAPERS_URL = "https://huggingface.co/api/daily_papers"
 USER_AGENT = "7Brief-Engine/1.0 (https://github.com/77AutumN/Intel_Briefing)"
