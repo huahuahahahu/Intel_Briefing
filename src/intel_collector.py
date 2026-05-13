@@ -334,8 +334,8 @@ def fetch_all_sources(limit_per_source: int = 10) -> dict:
                     _safe_print(f"  ✅ {sensor_name}: {len(items)} items")
                 else:
                     _safe_print(f"  ⚠️ {sensor_name}: 0 items")
-            except Exception as e:
-                _safe_print(f"  ❌ {name} FAILED: {e}")
+            except Exception:
+                logger.exception("Sensor %s FAILED", name)
     
     # ========== BATCH 2: Grok (depends on PH results) ==========
     if GROK_AVAILABLE:
@@ -360,8 +360,8 @@ Keep it concise but informative. If no data found, say "暂无X平台讨论数�
                         _safe_print(f"    ✅ Grok returned sentiment for {product_data['title']}")
                     else:
                         _safe_print(f"    ⚠️ Grok returned no data for {product_data['title']}")
-                except Exception as e:
-                    _safe_print(f"    ⚠️ Grok failed for {product_data['title']}: {e}")
+                except Exception:
+                    logger.exception("Grok PH sentiment failed for %s", product_data['title'])
             _timings["Grok Sentiment"] = time.time() - _t
         
         # 2b: Grok X/Twitter intelligence scan
@@ -380,8 +380,8 @@ Keep it concise but informative. If no data found, say "暂无X平台讨论数�
                 print("  [INFO] Grok returned X intelligence report (links validated).")
             else:
                 print(f"  [WARN] Grok returned no data or error.")
-        except Exception as e:
-            print(f"  [WARN] Grok API failed: {e}")
+        except Exception:
+            logger.exception("Grok API failed")
         _timings["X/Grok Scan"] = time.time() - _t
     
     # ========== RUNTIME BUDGET SUMMARY ==========

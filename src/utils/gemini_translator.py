@@ -126,8 +126,8 @@ def generate_brief(content: str, category: str = "general") -> str:
         data = response.json()
         result = data.get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "")
         return result.strip() if result else ""
-    except Exception as e:
-        print(f"    ⚠️ generate_brief 失败: {e}")
+    except Exception:
+        logger.exception("generate_brief 失败")
         return ""
 
 
@@ -298,8 +298,8 @@ def generate_news_brief(title: str, content: str = "", category: str = "tech",
             return generate_news_brief(title, "", category, _depth=_depth + 1)
 
         return result
-    except Exception as e:
-        print(f"    ⚠️ generate_news_brief 失败: {e}")
+    except Exception:
+        logger.exception("generate_news_brief 失败")
         return ""
 
 
@@ -339,8 +339,8 @@ def expand_product_tagline(name: str, tagline: str) -> str:
         data = response.json()
         result = data.get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "")
         return result.strip() if result else ""
-    except Exception as e:
-        print(f"    ⚠️ expand_product_tagline 失败: {e}")
+    except Exception:
+        logger.exception("expand_product_tagline 失败")
         return ""
 
 

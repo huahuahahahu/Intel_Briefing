@@ -138,8 +138,8 @@ def fetch_search_snippet(title: str, url: str, timeout: int = 8) -> Optional[str
                     return snippet[:1000]
         
         return None
-    except Exception as e:
-        print(f"    [DDG] Search failed: {e}")
+    except Exception:
+        logger.exception("DDG search failed")
         return None
 
 
