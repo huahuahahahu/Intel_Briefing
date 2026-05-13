@@ -221,17 +221,19 @@ def summarize_blog_article(content: str, mode: str = "brief") -> str:
         return ""
 
 
-def generate_news_brief(title: str, content: str = "", category: str = "tech") -> str:
+def generate_news_brief(title: str, content: str = "", category: str = "tech",
+                        _depth: int = 0) -> str:
     """
     为 Tech/Capital 类新闻生成情报风格的中文短报（80-120字）。
     包含 [JUNK] 熔断协议：如果内容是垃圾，AI 返回 [JUNK] 时自动降级为标题推断。
     Ported from PWA's pre-generate-summaries.mjs.
-    
+
     Args:
         title: 文章标题
         content: 文章全文或片段（可以为空，此时做标题推断）
         category: 栏目类型 (tech/capital)
-    
+        _depth: 内部递归计数器，防止 AI 持续返回 [JUNK] 时无限递归 + 烧 API
+
     Returns:
         中文短报（80-120字），失败则返回空字符串
     """
@@ -289,9 +291,12 @@ def generate_news_brief(title: str, content: str = "", category: str = "tech") -
         # [JUNK] 熔断：AI 自己检测到垃圾内容
         if "[JUNK]" in result:
             print(f"    🚧 [JUNK] AI 检测到垃圾内容: {title[:30]}...")
+            if _depth >= 1:
+                # 二次降级仍判 JUNK，放弃以免无限递归 + 烧 API
+                return ""
             # 降级为标题推断（递归，无内容模式）
-            return generate_news_brief(title, "", category)
-        
+            return generate_news_brief(title, "", category, _depth=_depth + 1)
+
         return result
     except Exception as e:
         print(f"    ⚠️ generate_news_brief 失败: {e}")

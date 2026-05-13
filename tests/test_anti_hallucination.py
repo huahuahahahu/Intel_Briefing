@@ -47,3 +47,31 @@ def test_verified_ph_url_is_clickable():
     report = generate_report(intel, "2026-01-01")
     assert "[RealProduct](https://www.producthunt.com/posts/realproduct)" in report
     assert "未验证" not in report
+
+
+def test_generate_news_brief_junk_recursion_guard(monkeypatch):
+    """如果 Gemini 持续返回 [JUNK]，generate_news_brief 必须停止递归而不是无限烧 API。"""
+    from src.utils import gemini_translator as gt
+
+    call_count = {"n": 0}
+
+    class _FakeResp:
+        status_code = 200
+        def raise_for_status(self):
+            pass
+        def json(self):
+            return {"candidates": [{"content": {"parts": [{"text": "[JUNK] some garbage"}]}}]}
+
+    def _fake_post(*args, **kwargs):
+        call_count["n"] += 1
+        return _FakeResp()
+
+    monkeypatch.setattr(gt.httpx, "post", _fake_post)
+    monkeypatch.setattr(gt, "GEMINI_API_KEY", "fake-key-for-test")
+
+    result = gt.generate_news_brief("Fake Title", "some real content " * 5)
+
+    # 最多 2 次调用（首次 + 1 次降级），不能无限递归
+    assert call_count["n"] <= 2, f"递归保护失败：API 被调用了 {call_count['n']} 次"
+    # JUNK 终态返回空字符串
+    assert result == ""
