@@ -20,13 +20,9 @@ import html
 import urllib.request
 import xml.etree.ElementTree as ET
 import ssl
-import socket
 from dataclasses import dataclass
 from typing import List, Optional
 from datetime import datetime
-
-# Global TCP timeout
-socket.setdefaulttimeout(15.0)
 
 FETCH_TIMEOUT = 10
 MAX_ARTICLES_PER_FEED = 3
@@ -170,6 +166,18 @@ def _extract_author(entry, ns=None) -> str:
     return safe[:60]
 
 
+def _first(*elements):
+    """Return the first non-None element.
+
+    ElementTree Elements with no children are falsy, so plain ``a or b``
+    chains silently skip valid leaf elements (e.g. <title>text</title>).
+    """
+    for el in elements:
+        if el is not None:
+            return el
+    return None
+
+
 def _parse_feed(feed_content: str, source_title: str, domain: str, icon: str) -> List[HorizonArticle]:
     """Parse RSS/Atom feed content to extract Horizon articles."""
     articles = []
@@ -181,10 +189,10 @@ def _parse_feed(feed_content: str, source_title: str, domain: str, icon: str) ->
             ns = {'atom': 'http://www.w3.org/2005/Atom'}
             entries = root.findall('.//atom:entry', ns) or root.findall('.//entry')
             for entry in entries[:MAX_ARTICLES_PER_FEED]:
-                title = entry.find('atom:title', ns) or entry.find('title')
-                link = entry.find('atom:link[@rel="alternate"]', ns) or entry.find('atom:link', ns) or entry.find('link')
-                published = entry.find('atom:published', ns) or entry.find('atom:updated', ns) or entry.find('published') or entry.find('updated')
-                summary = entry.find('atom:summary', ns) or entry.find('atom:content', ns) or entry.find('summary') or entry.find('content')
+                title = _first(entry.find('atom:title', ns), entry.find('title'))
+                link = _first(entry.find('atom:link[@rel="alternate"]', ns), entry.find('atom:link', ns), entry.find('link'))
+                published = _first(entry.find('atom:published', ns), entry.find('atom:updated', ns), entry.find('published'), entry.find('updated'))
+                summary = _first(entry.find('atom:summary', ns), entry.find('atom:content', ns), entry.find('summary'), entry.find('content'))
 
                 title_text = title.text if title is not None and title.text else "Untitled"
                 link_href = link.get('href', '') if link is not None else ""
