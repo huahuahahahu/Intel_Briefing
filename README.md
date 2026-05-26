@@ -8,7 +8,7 @@
 
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)](https://python.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/Tests-33%20passed-brightgreen)](tests/)
+[![Tests](https://img.shields.io/badge/Tests-34%20passed-brightgreen)](tests/)
 [![GitHub Stars](https://img.shields.io/github/stars/77AutumN/Intel_Briefing?style=social)](https://github.com/77AutumN/Intel_Briefing)
 
 </div>
@@ -127,7 +127,7 @@ Intel_Briefing/
 │   │   └── verifier.py         # 链接有效性验证
 │   └── external/
 │       └── fetch_news.py       # Tier 1: HN/GitHub/36Kr/V2EX/WS 聚合器
-├── tests/                      # 33 tests (import/行为/降级)
+├── tests/                      # 34 tests (import/行为/降级)
 │   ├── test_import_smoke.py    # 16 模块 import 验证
 │   ├── test_anti_hallucination.py  # 防幻觉行为测试
 │   ├── test_graceful_degradation.py # 优雅降级测试
@@ -158,7 +158,7 @@ Intel_Briefing/
 
 ```bash
 pip install -e .      # 首次需要
-pytest tests/ -v      # 33 tests, <1s
+pytest tests/ -v      # 34 tests, <1s
 ```
 
 测试覆盖三个维度：
