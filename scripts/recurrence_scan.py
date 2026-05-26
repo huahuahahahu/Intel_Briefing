@@ -1,5 +1,6 @@
 """recurrence_scan.py — Scan Mission Plans for recurring signal tags.
-Usage: python scripts/recurrence_scan.py [--days 7] [--vault D:\\Intel_Briefing]
+Usage: python scripts/recurrence_scan.py [--days 7] [--vault /path/to/repo]
+       (--vault defaults to the repo root containing this script)
 Output: A markdown block suitable for injection into the ToT prompt.
 """
 import re
@@ -74,7 +75,7 @@ if __name__ == "__main__":
     vault = (
         Path(sys.argv[sys.argv.index("--vault") + 1])
         if "--vault" in sys.argv
-        else Path("D:/Intel_Briefing")
+        else Path(__file__).resolve().parents[1]
     )
     days = (
         int(sys.argv[sys.argv.index("--days") + 1])

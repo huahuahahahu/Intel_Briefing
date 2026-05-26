@@ -14,7 +14,7 @@ Real daily report structure:
   ## 🛠️ 技术趋势 (Tech Trends)    ← section header (sets source context)
   > Hacker News + GitHub Trending   ← section sub-source hint
   ### 1. [Title](url)               ← signal title (KEY: extract)
-  > ⚡ one-liner summary            ← signal brief (KEY: extract)  
+  > ⚡ one-liner summary            ← signal brief (KEY: extract)
   📍 Hacker News | 🔥 99 points    ← source + engagement (KEY: extract)
   **详情:** long analysis...        ← detail block (SKIP: too verbose)
 """
@@ -23,6 +23,10 @@ import os
 import re
 import sys
 from datetime import datetime
+from pathlib import Path
+
+# Repo root = parent of this scripts/ dir (works wherever the repo is cloned)
+REPO_ROOT = Path(__file__).resolve().parents[1]
 
 # Maps inline source markers to short tags
 SOURCE_MARKERS = {
@@ -104,7 +108,7 @@ def get_target_month():
 
 
 def condense(month: str):
-    pattern = f"D:/Intel_Briefing/reports/daily_briefings/Morning_Report_{month}-*.md"
+    pattern = str(REPO_ROOT / "reports" / "daily_briefings" / f"Morning_Report_{month}-*.md")
     files = sorted(glob.glob(pattern))
 
     if not files:
@@ -112,7 +116,7 @@ def condense(month: str):
         print(f"Pattern: {pattern}")
         sys.exit(1)
 
-    out_dir = "D:/Intel_Briefing/reports/condensed_data"
+    out_dir = str(REPO_ROOT / "reports" / "condensed_data")
     os.makedirs(out_dir, exist_ok=True)
 
     output = []
