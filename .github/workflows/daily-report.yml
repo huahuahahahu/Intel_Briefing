@@ -32,6 +32,22 @@ jobs:
           LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
         run: python cli.py
 
+      - name: Commit report back to repo
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          DATE=$(date -u +%Y-%m-%d)
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add reports/daily_briefings/Morning_Report_${DATE}.md reports/summaries/${DATE}.json 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "data: add daily report ${DATE}"
+            git push
+            echo "Report committed: reports/daily_briefings/Morning_Report_${DATE}.md"
+          fi
+
       # Optional: push the generated report to a separate frontend (PWA) repo.
       # Configure repository variable PWA_REPO (e.g. "your-name/your-pwa-repo")
       # and secret PWA_DEPLOY_TOKEN. If either is missing, this step is skipped,
