@@ -37,18 +37,21 @@ jobs:
           echo "DATE=$(date -u +%Y-%m-%d)" >> $GITHUB_ENV
 
       - name: Commit report back to repo
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add -f reports/daily_briefings/Morning_Report_${DATE}.md reports/summaries/${DATE}.json 2>/dev/null || true
+          REPORT="reports/daily_briefings/Morning_Report_${DATE}.md"
+          echo "DATE=$DATE"
+          echo "Looking for: $REPORT"
+          ls -la "$REPORT" 2>&1 || echo "File not found"
+          git add -f "$REPORT" 2>&1
+          git status --short
           if git diff --cached --quiet; then
             echo "No changes to commit"
           else
             git commit -m "data: add daily report ${DATE}"
             git push
-            echo "Report committed: reports/daily_briefings/Morning_Report_${DATE}.md"
+            echo "Report committed: $REPORT"
           fi
 
       - name: Send report via email
