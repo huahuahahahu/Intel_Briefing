@@ -30,13 +30,14 @@ jobs:
           XAI_MODEL: grok-4-fast
           PRODUCTHUNT_TOKEN: ${{ secrets.PRODUCTHUNT_TOKEN }}
           LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
-        run: python cli.py
+        run: |
+          python cli.py
+          echo "DATE=$(date -u +%Y-%m-%d)" >> $GITHUB_ENV
 
       - name: Commit report back to repo
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          DATE=$(date -u +%Y-%m-%d)
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add reports/daily_briefings/Morning_Report_${DATE}.md reports/summaries/${DATE}.json 2>/dev/null || true
@@ -48,59 +49,29 @@ jobs:
             echo "Report committed: reports/daily_briefings/Morning_Report_${DATE}.md"
           fi
 
-      # Optional: push the generated report to a separate frontend (PWA) repo.
-      # Configure repository variable PWA_REPO (e.g. "your-name/your-pwa-repo")
-      # and secret PWA_DEPLOY_TOKEN. If either is missing, this step is skipped,
-      # so forks without a PWA frontend won't fail here.
-      - name: Deliver report to PWA (optional)
-        env:
-          PWA_DEPLOY_TOKEN: ${{ secrets.PWA_DEPLOY_TOKEN }}
-          PWA_REPO: ${{ vars.PWA_REPO }}
+      - name: Send report via email
+        if: ${{ vars.MAIL_TO != '' }}
         run: |
-          if [ -z "$PWA_DEPLOY_TOKEN" ] || [ -z "$PWA_REPO" ]; then
-            echo "ℹ️ PWA delivery skipped (set PWA_REPO variable and PWA_DEPLOY_TOKEN secret to enable)."
-            exit 0
-          fi
-
-          DATE=$(date -u +%Y-%m-%d)
           REPORT="reports/daily_briefings/Morning_Report_${DATE}.md"
-          SUMMARIES="reports/summaries/${DATE}.json"
-
           if [ ! -f "$REPORT" ]; then
-            echo "❌ Report not found: $REPORT"
-            ls -la reports/daily_briefings/ 2>/dev/null || echo "Directory does not exist"
+            echo "❌ Report not found"
             exit 1
           fi
-
-          echo "📄 Report found: $(wc -c < "$REPORT") bytes"
-
-          git clone https://x-access-token:${PWA_DEPLOY_TOKEN}@github.com/${PWA_REPO}.git /tmp/pwa
-          cp "$REPORT" /tmp/pwa/data/daily_briefings/
-
-          # Copy pre-generated summaries if available
-          if [ -f "$SUMMARIES" ]; then
-            mkdir -p /tmp/pwa/public/data/summaries
-            cp "$SUMMARIES" /tmp/pwa/public/data/summaries/
-            echo "📝 Summaries found: $(wc -c < "$SUMMARIES") bytes"
+          # Use curl to send via Gmail SMTP (or skip if not configured)
+          if [ -n "${{ secrets.MAIL_PASSWORD }}" ]; then
+            python -c "
+          import smtplib
+          from email.mime.text import MIMEText
+          report = open('$REPORT', 'r', encoding='utf-8').read()
+          msg = MIMEText(report, 'plain', 'utf-8')
+          msg['Subject'] = '🌐 全球情报日报 - ${DATE}'
+          msg['From'] = '${{ secrets.MAIL_USERNAME }}'
+          msg['To'] = '${{ vars.MAIL_TO }}'
+          with smtplib.SMTP_SSL('smtp.gmail.com', 465) as s:
+              s.login('${{ secrets.MAIL_USERNAME }}', '${{ secrets.MAIL_PASSWORD }}')
+              s.send_message(msg)
+          print('✅ Email sent to ${{ vars.MAIL_TO }}')
+          "
           else
-            echo "⚠️ No summaries file found, PWA will generate on build"
+            echo "ℹ️ Email skipped (set MAIL_USERNAME, MAIL_PASSWORD secrets and MAIL_TO variable)"
           fi
-
-          cd /tmp/pwa
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/daily_briefings/
-          # Only stage summaries if they were actually copied (dir may not exist)
-          if [ -d public/data/summaries ]; then
-            git add -f public/data/summaries/
-          fi
-          git diff --cached --stat
-
-          if git diff --cached --quiet; then
-            echo "✅ No changes to commit"
-          else
-            git commit -m "data: add daily report ${DATE}"
-            git push
-            echo "✅ Report delivered to ${PWA_REPO}"
-          fi
-
