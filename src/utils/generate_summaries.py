@@ -16,9 +16,9 @@ import httpx
 from src.config import cfg
 
 # --- Config (from unified config layer) ---
-GEMINI_API_KEY = cfg.gemini_api_key
-GEMINI_API_URL = cfg.gemini_api_url
-MODEL_NAME = "gemini-2.5-flash-lite"  # summaries use lite model for cost
+LLM_API_KEY = cfg.llm_api_key
+LLM_API_URL = cfg.llm_api_url
+MODEL_NAME = cfg.llm_model  # qwen3.5-flash
 
 # Jina Reader for fetching article content
 JINA_TIMEOUT = 12  # seconds
@@ -48,34 +48,36 @@ CATEGORY_LIMITS = {
 }
 
 
-def _call_gemini(prompt: str, max_tokens: int = 256) -> str:
-    """Call Gemini API to generate text."""
-    if not GEMINI_API_KEY:
+def _call_llm(prompt: str, max_tokens: int = 256) -> str:
+    """Call OpenAI-compatible chat completions API to generate text."""
+    if not LLM_API_KEY:
         return ""
 
-    url = f"{GEMINI_API_URL}/{MODEL_NAME}:generateContent?key={GEMINI_API_KEY}"
+    url = f"{LLM_API_URL}/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {LLM_API_KEY}",
+        "Content-Type": "application/json",
+    }
     payload = {
-        "contents": [{"parts": [{"text": prompt}]}],
-        "generationConfig": {
-            "temperature": 0.3,
-            "maxOutputTokens": max_tokens
-        }
+        "model": MODEL_NAME,
+        "messages": [{"role": "user", "content": prompt}],
+        "temperature": 0.3,
+        "max_tokens": max_tokens,
     }
 
     try:
-        response = httpx.post(url, json=payload, timeout=30)
+        response = httpx.post(url, json=payload, headers=headers, timeout=30)
         if response.status_code == 200:
             data = response.json()
-            result = (data.get("candidates", [{}])[0]
-                      .get("content", {})
-                      .get("parts", [{}])[0]
-                      .get("text", ""))
+            result = (data.get("choices", [{}])[0]
+                      .get("message", {})
+                      .get("content", ""))
             return result.strip() if result else ""
         else:
-            print(f"    ⚠️ Gemini API error: {response.status_code}")
+            print(f"    ⚠️ LLM API error: {response.status_code}")
             return ""
     except Exception as e:
-        print(f"    ⚠️ Gemini call failed: {e}")
+        print(f"    ⚠️ LLM call failed: {e}")
         return ""
 
 
@@ -132,7 +134,7 @@ def _summarize_content(content: str, title: str = "") -> str:
 内容：
 {content[:3000]}"""
 
-    return _call_gemini(prompt, max_tokens=128)
+    return _call_llm(prompt, max_tokens=128)
 
 
 def _translate_tagline(tagline: str, title: str = "") -> str:
@@ -150,7 +152,7 @@ def _translate_tagline(tagline: str, title: str = "") -> str:
 产品名：{title}
 标语：{tagline}"""
 
-    result = _call_gemini(prompt, max_tokens=64)
+    result = _call_llm(prompt, max_tokens=64)
     if result:
         # Clean up any quotes or prefixes the model might add
         result = result.strip().strip('"').strip("'").strip("⚡").strip()

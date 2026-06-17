@@ -66,6 +66,13 @@ except ImportError:
     print("[WARN] Grok (X/Twitter) sensor not available, skipping.")
 
 try:
+    from src.sensors.reddit_sensor import fetch_reddit_hot
+    REDDIT_AVAILABLE = True
+except ImportError:
+    REDDIT_AVAILABLE = False
+    print("[WARN] Reddit sensor not available, skipping.")
+
+try:
     from src.sensors.hf_daily_papers import fetch_hf_daily_papers
     HF_PAPERS_AVAILABLE = True
 except ImportError:
@@ -269,6 +276,17 @@ def _fetch_product_hunt(limit):
     return "Product Hunt", "product_gems", results
 
 
+def _fetch_reddit(limit):
+    posts = fetch_reddit_hot(limit_per_sub=limit)
+    return "Reddit", "social", [
+        {
+            "source": f"r/{p['subreddit']}", "category": "Reddit",
+            "title": p["title"], "url": p["url"],
+            "author": p["author"], "heat": p["heat"],
+        } for p in posts
+    ]
+
+
 # =====================================================================
 # Main Orchestrator
 # =====================================================================
@@ -315,6 +333,8 @@ def fetch_all_sources(limit_per_source: int = 10) -> dict:
         batch1_tasks.append(("MIT TR", _fetch_mit_tr, True))
     if PH_AVAILABLE:
         batch1_tasks.append(("Product Hunt", _fetch_product_hunt, True))
+    if REDDIT_AVAILABLE:
+        batch1_tasks.append(("Reddit", _fetch_reddit, True))
     
     print(f"[*] Batch 1: Launching {len(batch1_tasks)} sensors in parallel...")
     

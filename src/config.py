@@ -38,21 +38,21 @@ class IntelConfig:
     """
 
     # === Core API Keys (SECRETS — no defaults) ===
-    gemini_api_key: Optional[str] = field(default=None)
+    llm_api_key: Optional[str] = field(default=None)
     xai_api_key: Optional[str] = field(default=None)
     github_token: Optional[str] = field(default=None)
     producthunt_token: Optional[str] = field(default=None)
 
     # === XAI / Grok Configuration ===
     # Aligned with .github/workflows/daily-report.yml actual values
-    xai_base_url: str = "https://openrouter.ai/api/v1/chat/completions"
-    xai_model: str = "x-ai/grok-4-fast"
+    xai_base_url: str = "https://api.x.ai/v1/chat/completions"
+    xai_model: str = "grok-4-fast"
 
-    # === Gemini Configuration ===
-    gemini_api_url: str = "https://generativelanguage.googleapis.com/v1beta/models"
-    gemini_model: str = "gemini-2.0-flash"
-    gemini_timeout: int = 60
-    gemini_max_retries: int = 3
+    # === LLM Configuration (OpenAI-compatible endpoint) ===
+    llm_api_url: str = "https://api-slb.packyapi.com/v1"
+    llm_model: str = "qwen3.5-flash"
+    llm_timeout: int = 60
+    llm_max_retries: int = 3
 
     # === Jina Reader Configuration ===
     jina_reader_url: str = "https://r.jina.ai/"
@@ -75,22 +75,22 @@ class IntelConfig:
     def from_env(cls) -> "IntelConfig":
         """Build config from environment variables."""
         return cls(
-            gemini_api_key=os.getenv("GEMINI_API_KEY"),
+            llm_api_key=os.getenv("LLM_API_KEY") or os.getenv("GEMINI_API_KEY"),
             xai_api_key=os.getenv("XAI_API_KEY"),
             github_token=os.getenv("GITHUB_TOKEN"),
             producthunt_token=os.getenv("PRODUCTHUNT_TOKEN"),
             xai_base_url=os.getenv(
                 "XAI_BASE_URL",
-                "https://openrouter.ai/api/v1/chat/completions",
+                "https://api.x.ai/v1/chat/completions",
             ),
-            xai_model=os.getenv("XAI_MODEL", "x-ai/grok-4-fast"),
-            gemini_api_url=os.getenv(
-                "GEMINI_API_URL",
-                "https://generativelanguage.googleapis.com/v1beta/models",
+            xai_model=os.getenv("XAI_MODEL", "grok-4-fast"),
+            llm_api_url=os.getenv(
+                "LLM_API_URL",
+                os.getenv("GEMINI_API_URL", "https://api-slb.packyapi.com/v1"),
             ),
-            gemini_model=os.getenv("GEMINI_MODEL", "gemini-2.0-flash"),
-            gemini_timeout=int(os.getenv("GEMINI_TIMEOUT", "60")),
-            gemini_max_retries=int(os.getenv("GEMINI_MAX_RETRIES", "3")),
+            llm_model=os.getenv("LLM_MODEL", os.getenv("GEMINI_MODEL", "qwen3.5-flash")),
+            llm_timeout=int(os.getenv("LLM_TIMEOUT", os.getenv("GEMINI_TIMEOUT", "60"))),
+            llm_max_retries=int(os.getenv("LLM_MAX_RETRIES", os.getenv("GEMINI_MAX_RETRIES", "3"))),
             jina_reader_url=os.getenv("JINA_READER_URL", "https://r.jina.ai/"),
             jina_timeout=int(os.getenv("JINA_TIMEOUT", "30")),
             jina_max_chars=int(os.getenv("JINA_MAX_CHARS", "15000")),
@@ -110,22 +110,30 @@ class IntelConfig:
             warnings.append("XAI_API_KEY not set — Grok sensor will be disabled")
         if not self.github_token:
             warnings.append("GITHUB_TOKEN not set — GitHub Trending will be disabled")
-        if not self.gemini_api_key:
-            warnings.append("GEMINI_API_KEY not set — report generation will fail")
+        if not self.llm_api_key:
+            warnings.append("LLM_API_KEY not set — report generation will fail")
         return warnings
 
 
 # Singleton instance — import this everywhere
 cfg = IntelConfig.from_env()
 
-# Backward-compatible module-level exports
-# (used by gemini_translator.py, jina_reader.py, report_generator.py)
-GEMINI_RATE_LIMIT_DELAY = cfg.gemini_rate_limit_delay
-GEMINI_API_KEY = cfg.gemini_api_key
-GEMINI_API_URL = cfg.gemini_api_url
-GEMINI_MODEL = cfg.gemini_model
-GEMINI_TIMEOUT = cfg.gemini_timeout
-GEMINI_MAX_RETRIES = cfg.gemini_max_retries
+# Module-level exports (used by gemini_translator.py, report_generator.py, etc.)
+LLM_RATE_LIMIT_DELAY = cfg.gemini_rate_limit_delay  # keep field name for now
+LLM_API_KEY = cfg.llm_api_key
+LLM_API_URL = cfg.llm_api_url
+LLM_MODEL = cfg.llm_model
+LLM_TIMEOUT = cfg.llm_timeout
+LLM_MAX_RETRIES = cfg.llm_max_retries
+
+# Backward-compatible aliases (for code still referencing GEMINI_*)
+GEMINI_RATE_LIMIT_DELAY = LLM_RATE_LIMIT_DELAY
+GEMINI_API_KEY = LLM_API_KEY
+GEMINI_API_URL = LLM_API_URL
+GEMINI_MODEL = LLM_MODEL
+GEMINI_TIMEOUT = LLM_TIMEOUT
+GEMINI_MAX_RETRIES = LLM_MAX_RETRIES
+
 JINA_READER_URL = cfg.jina_reader_url
 JINA_TIMEOUT = cfg.jina_timeout
 JINA_MAX_CHARS = cfg.jina_max_chars

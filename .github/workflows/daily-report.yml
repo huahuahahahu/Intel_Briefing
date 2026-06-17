@@ -26,10 +26,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
-          XAI_BASE_URL: https://openrouter.ai/api/v1/chat/completions
-          XAI_MODEL: x-ai/grok-4-fast
+          XAI_BASE_URL: https://api.x.ai/v1/chat/completions
+          XAI_MODEL: grok-4-fast
           PRODUCTHUNT_TOKEN: ${{ secrets.PRODUCTHUNT_TOKEN }}
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
         run: python cli.py
 
       # Optional: push the generated report to a separate frontend (PWA) repo.

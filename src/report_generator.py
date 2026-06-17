@@ -157,9 +157,9 @@ def generate_report(intel: dict, date_str: str) -> str:
     else:
         lines.append("*暂无数据 (Product Hunt API 可能需要配置)*\n")
 
-    # --- Social (X/Twitter) ---
-    lines.append("## 🐦 社交热议 (Social)")
-    lines.append("> X (Twitter) - AI/Tech Discussions\n")
+    # --- Social (Reddit + X/Twitter) ---
+    lines.append("## 🗨️ 社交热议 (Social)")
+    lines.append("> Reddit + X (Twitter) — AI/Tech Discussions\n")
 
     if intel.get("social"):
         for item in intel["social"]:
@@ -178,7 +178,7 @@ def generate_report(intel: dict, date_str: str) -> str:
                 lines.append(f"❤️ {heat} | 🔗 [Link]({url})")
                 lines.append("")
     else:
-        lines.append("*暂无数据 (需要配置 XAI_API_KEY)*\n")
+        lines.append("*暂无数据 (Reddit sensor 不可用，Grok 不可用)*\n")
 
     # --- Community ---
     lines.append("## 🗣️ 社区热点 (Community)")

@@ -54,26 +54,23 @@ def fetch_grok_intel(query: str, override_prompt: str = None, timeout: int = 60,
         "X-Title": "Intel Briefing Engine"
     }
 
-    # 强制启用 Web Search 插件（无 Web Search 的 Grok 输出 100% 幻觉）
-    if not plugins:
-        plugins = [{"id": "web"}]
-        print("  [!] Web Search 未指定，已自动启用（防幻觉必备）")
+    # Note: xAI direct API does not support OpenRouter-style plugins.
+    # Web search is built into Grok models natively.
 
     payload = {
         "model": MODEL_NAME,
         "messages": [
             {
-                "role": "system", 
+                "role": "system",
                 "content": system_content
             },
             {
-                "role": "user", 
+                "role": "user",
                 "content": user_content
             }
         ],
         "stream": False,
         "temperature": 0.5,
-        "plugins": plugins
     }
 
     try:

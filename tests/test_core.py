@@ -11,15 +11,15 @@ class TestConfig:
     """测试配置模块。"""
 
     def test_config_imports(self):
-        from src.config import cfg, GEMINI_API_URL, JINA_READER_URL
-        assert GEMINI_API_URL.startswith("https://")
+        from src.config import cfg, LLM_API_URL, JINA_READER_URL
+        assert LLM_API_URL.startswith("https://")
         assert JINA_READER_URL.startswith("https://")
         assert cfg.fetch_timeout > 0
 
     def test_config_has_all_keys(self):
         from src.config import cfg
         # Verify all critical fields exist
-        assert hasattr(cfg, 'gemini_api_url')
+        assert hasattr(cfg, 'llm_api_url')
         assert hasattr(cfg, 'xai_base_url')
         assert hasattr(cfg, 'jina_reader_url')
         assert hasattr(cfg, 'gemini_rate_limit_delay')
